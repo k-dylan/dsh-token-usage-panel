@@ -92,7 +92,11 @@ function usageCell(column, context) {
 					h("span", { key: "cache", className: "dshTup_rowMetaPart dshTup_rowMetaOptional" }, t("efficiency.cacheReadShort", { rate: display.cacheReadRate })),
 					childCount > 0 ? h("span", { key: "children", className: "dshTup_rowFamily" }, t("tree.children", { n: childCount })) : null,
 					childCount > 0 && familyTotal !== undefined
-						? h("span", { key: "family", className: "dshTup_rowFamily" }, t("tree.family", { n: formatInt(familyTotal) }))
+						? h(
+								"span",
+								{ key: "family", className: "dshTup_rowFamily", title: formatInt(familyTotal) + " " + t("unit.tokens") },
+								t("tree.family", { n: formatCompact(familyTotal) }),
+							)
 						: null,
 					row.attempt === "error"
 						? h(
@@ -114,7 +118,7 @@ function usageCell(column, context) {
 			]),
 		]);
 	}
-	if (column.key === "total") return h("td", { key: "total", className: hideBelow }, display.total);
+	if (column.key === "total") return h("td", { key: "total", className: hideBelow, title: display.totalExact }, display.total);
 	if (column.key === "share") {
 		const ratio = filteredTotal > 0 ? share / filteredTotal : 0;
 		return h("td", { key: "share", className: hideBelow }, [
@@ -128,10 +132,10 @@ function usageCell(column, context) {
 			]),
 		]);
 	}
-	if (column.key === "input") return h("td", { key: "input", className: hideBelow }, display.input);
-	if (column.key === "cacheRead") return h("td", { key: "cacheRead", className: hideBelow }, display.cacheRead);
-	if (column.key === "cacheWrite") return h("td", { key: "cacheWrite", className: hideBelow }, display.cacheWrite);
-	if (column.key === "output") return h("td", { key: "output", className: hideBelow }, display.output);
+	if (column.key === "input") return h("td", { key: "input", className: hideBelow, title: display.inputExact }, display.input);
+	if (column.key === "cacheRead") return h("td", { key: "cacheRead", className: hideBelow, title: display.cacheReadExact }, display.cacheRead);
+	if (column.key === "cacheWrite") return h("td", { key: "cacheWrite", className: hideBelow, title: display.cacheWriteExact }, display.cacheWrite);
+	if (column.key === "output") return h("td", { key: "output", className: hideBelow, title: display.outputExact }, display.output);
 	return h("td", { key: "updated", className: hideBelow }, display.updatedAt);
 }
 

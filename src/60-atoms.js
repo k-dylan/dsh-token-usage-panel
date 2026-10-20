@@ -61,11 +61,11 @@ function Summary({ totals, filteredTotal, matched, total, grandTotal, filteredOu
 	const shown = useCountUp(filteredTotal, animate);
 	const parts = SEGMENTS.map((segment) => ({ ...segment, value: totals[segment.key] }));
 	const visible = parts.filter((part) => part.value > 0);
-	const label = t("composition") + ": " + formatInt(filteredTotal);
+	const label = t("composition") + ": " + formatCompact(filteredTotal);
 	return h("section", { className: "dshTup_summary" }, [
 		h("div", { key: "head", className: "dshTup_sumHead" }, [
 			h("span", { key: "l", className: "dshTup_sumLabel" }, filteredOut ? t("clean") : t("card.total")),
-			h("span", { key: "v", className: "dshTup_sumValue" }, formatInt(shown)),
+			h("span", { key: "v", className: "dshTup_sumValue", title: formatInt(filteredTotal) + " " + t("unit.tokens") }, formatCompact(shown)),
 			h(
 				"span",
 				{ key: "h", className: "dshTup_sumHint" },
@@ -94,7 +94,7 @@ function Summary({ totals, filteredTotal, matched, total, grandTotal, filteredOu
 					h("span", { key: part.key, className: "dshTup_legendItem" }, [
 						h("span", { key: "dot", className: "dshTup_dot", style: { background: part.color }, "aria-hidden": "true" }),
 						h("span", { key: "label" }, t(part.labelKey)),
-						h("span", { key: "num", className: "dshTup_legendNum" }, formatInt(part.value)),
+						h("span", { key: "num", className: "dshTup_legendNum", title: formatInt(part.value) + " " + t("unit.tokens") }, formatCompact(part.value)),
 					]),
 				),
 			),
@@ -102,7 +102,7 @@ function Summary({ totals, filteredTotal, matched, total, grandTotal, filteredOu
 		showGrand === true && grandTotal !== filteredTotal
 			? h("div", { key: "grand", className: "dshTup_grand" }, [
 					t("allTime"),
-					h("span", { key: "v", className: "dshTup_grandNum" }, formatInt(grandTotal)),
+					h("span", { key: "v", className: "dshTup_grandNum", title: formatInt(grandTotal) + " " + t("unit.tokens") }, formatCompact(grandTotal)),
 				])
 			: null,
 	]);

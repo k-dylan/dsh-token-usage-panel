@@ -582,7 +582,7 @@ function TokenUsagePanel(props) {
 	const wasLoading = react.useRef(false);
 	react.useEffect(() => {
 		if (wasLoading.current && !loading) {
-			announce(hits.length > 0 ? t("threshold." + hits[0].kind + "Over", { used: formatInt(hits[0].used), limit: formatInt(hits[0].limit), title: hits[0].title ?? "" }) : t("loaded"));
+			announce(hits.length > 0 ? t("threshold." + hits[0].kind + "Over", { used: formatCompact(hits[0].used), limit: formatCompact(hits[0].limit), title: hits[0].title ?? "" }) : t("loaded"));
 		}
 		wasLoading.current = loading;
 	}, [loading, announce, t, hits]);
@@ -842,7 +842,19 @@ function TokenUsagePanel(props) {
 							"ul",
 							{ key: "list", className: "dshTup_alertList" },
 							hits.map((hit) =>
-								h("li", { key: hit.kind }, t("threshold." + hit.kind + "Over", { used: formatInt(hit.used), limit: formatInt(hit.limit), title: hit.title ?? "" })),
+								h(
+									"li",
+									{
+										key: hit.kind,
+										title:
+											t("threshold." + hit.kind + "Over", {
+												used: formatInt(hit.used),
+												limit: formatInt(hit.limit),
+												title: hit.title ?? "",
+											}),
+									},
+									t("threshold." + hit.kind + "Over", { used: formatCompact(hit.used), limit: formatCompact(hit.limit), title: hit.title ?? "" }),
+								),
 							),
 						),
 						h(Button, { key: "set", variant: "ghost", size: "sm", onClick: openThresholdEditor }, t("threshold.settings")),

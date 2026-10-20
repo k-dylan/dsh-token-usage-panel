@@ -13,9 +13,60 @@ function formatInt(value) {
 	return NUMBER_FORMAT.format(safe);
 }
 
-/** Compact a large count: `12K`, `1.2M`, `8.8B`. */
+/**
+ * Compact-number notation for the active UI language.
+ *
+ * Chinese surfaces read `万`/`亿` where an English surface reads `K`/`M`/`B`;
+ * the panel switches on the locale the shell reports, and an unknown id keeps
+ * the Chinese notation its default dictionaries already use.
+ */
+let COMPACT_LOCALE = "zh";
+
+/**
+ * Switch the compact-number notation to the active UI language.
+ * @param active - locale id reported by the locale seat.
+ */
+function setCompactLocale(active) {
+	COMPACT_LOCALE = typeof active === "string" && active.toLowerCase().startsWith("en") ? "en" : "zh";
+}
+
+/** Drop trailing decimal zeros (`5.50` becomes `5.5`, `3.00` becomes `3`). */
+function trimFixed(text) {
+	return text.indexOf(".") === -1 ? text : text.replace(/\.?0+$/, "");
+}
+
+/**
+ * Compact a large count with Chinese myriad units: `8,200`, `1.2万`, `28.7万`,
+ * `4654万`, `5.5亿`, `1.2万亿`.
+ *
+ * Precision follows magnitude: two decimals below 10, one below 100, and whole
+ * numbers from 100 up, so a figure keeps about three significant digits without
+ * growing longer than four. Rounding can carry into the next unit
+ * (`9999.99万` becomes `1亿`); the loop promotes instead of printing `10000万`.
+ */
+function formatCompactZh(value) {
+	const safe = Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+	if (safe < 10000) return NUMBER_FORMAT.format(safe);
+	const units = [[1e12, "万亿"], [1e8, "亿"], [1e4, "万"]];
+	let index = units.findIndex(([base]) => safe >= base);
+	while (index >= 0) {
+		const [base, suffix] = units[index];
+		const scaled = safe / base;
+		const decimals = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+		const text = trimFixed(scaled.toFixed(decimals));
+		if (index > 0 && Number(text) >= 10000) {
+			index -= 1;
+			continue;
+		}
+		return text + suffix;
+	}
+	return NUMBER_FORMAT.format(safe);
+}
+
+/** Compact a large count in the active notation: `12K`/`1.2M` or `1.2万`/`5.5亿`. */
 function formatCompact(value) {
 	const safe = Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+	if (COMPACT_LOCALE === "zh") return formatCompactZh(safe);
 	if (safe < 10000) return NUMBER_FORMAT.format(safe);
 	if (safe < 1000000) return (safe / 1000).toFixed(safe < 100000 ? 1 : 0) + "K";
 	if (safe < 1000000000) return (safe / 1000000).toFixed(safe < 10000000 ? 2 : 1) + "M";

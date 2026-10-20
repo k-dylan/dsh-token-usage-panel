@@ -2,14 +2,32 @@
 const inject = ["slots", "locale", "sessions", "uiWorkspace", "workspaces"];
 
 /**
+ * Push the shell's active locale into the compact-number notation.
+ * @param ctx - browser services used by these contributions.
+ */
+function syncCompactLocale(ctx) {
+	if (typeof ctx.locale.getLocale !== "function") return;
+	const snapshot = ctx.locale.getLocale();
+	if (snapshot !== null && snapshot !== undefined) setCompactLocale(snapshot.active);
+}
+
+/**
  * Register the sidebar entry and its main panel.
  * @param ctx - browser services used by these contributions.
  */
 function apply(ctx) {
+	syncCompactLocale(ctx);
 	ctx.effect(() => ctx.locale.register(NS, { zh, en }), "dsh-token-usage-panel: dictionaries");
-	// Rows cache formatted labels, and those follow the active locale: drop the
-	// cache whenever a dictionary or the preference changes.
-	ctx.effect(() => ctx.locale.subscribe(() => clearDisplayCache()), "dsh-token-usage-panel: locale cache");
+	// Rows cache formatted labels and the compact notation follows the active
+	// language: refresh both whenever a dictionary or the preference changes.
+	ctx.effect(
+		() =>
+			ctx.locale.subscribe(() => {
+				syncCompactLocale(ctx);
+				clearDisplayCache();
+			}),
+		"dsh-token-usage-panel: locale cache",
+	);
 	ctx.effect(() => startThresholdWatch(ctx.sessions.list, ctx.locale.bind(NS)), "dsh-token-usage-panel: threshold watch");
 	const openSession = (id) => {
 		ctx.uiWorkspace.openSession(id);

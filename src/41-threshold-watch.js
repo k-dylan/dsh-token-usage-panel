@@ -60,8 +60,8 @@ function dispatchThresholdNotification(hit, t) {
 	if (typeof Notification !== "function" || Notification.permission !== "granted") return false;
 	const title = t("panel");
 	const body = t("threshold." + hit.kind + "Over", {
-		used: formatInt(hit.used),
-		limit: formatInt(hit.limit),
+		used: formatCompact(hit.used),
+		limit: formatCompact(hit.limit),
 		title: hit.title ?? "",
 	});
 	try {

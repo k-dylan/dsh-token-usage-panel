@@ -244,10 +244,10 @@ function ActivityHeatmap({ byDay, offsetMinutes, today, t, extra, note, onSelect
 										null,
 										formatDayIso(entry.day, offsetMinutes) +
 											" · " +
-											formatInt(entry.tokens) +
+											formatCompact(entry.tokens) +
 											" " +
 											t("unit.tokens") +
-											(anomaly === undefined ? "" : " · " + t("activity.anomaly", { median: formatInt(anomaly.median) })),
+											(anomaly === undefined ? "" : " · " + t("activity.anomaly", { median: formatCompact(anomaly.median) })),
 									),
 								);
 							}),
@@ -504,13 +504,13 @@ function TokenTrend({ days, values, details, offsetMinutes, t, extra }) {
 								? h("div", { key: "total", className: "dshTup_tooltipRow" }, [
 										h("span", { key: "dot", className: "dshTup_dot", style: { background: TREND_COLOR } }),
 										h("span", { key: "l", className: "dshTup_tooltipLabel" }, t("kpi.total")),
-										h("span", { key: "v", className: "dshTup_tooltipValue" }, formatInt(hoverTotal)),
+										h("span", { key: "v", className: "dshTup_tooltipValue", title: formatInt(hoverTotal) + " " + t("unit.tokens") }, formatCompact(hoverTotal)),
 									])
 								: hoverRows.map((row) =>
 										h("div", { key: row.id, className: "dshTup_tooltipRow" }, [
 											h("span", { key: "dot", className: "dshTup_dot", style: { background: row.color } }),
 											h("span", { key: "l", className: "dshTup_tooltipLabel" }, row.label),
-											h("span", { key: "v", className: "dshTup_tooltipValue" }, formatInt(row.value)),
+											h("span", { key: "v", className: "dshTup_tooltipValue", title: formatInt(row.value) + " " + t("unit.tokens") }, formatCompact(row.value)),
 										]),
 									),
 						],
@@ -579,8 +579,8 @@ function ModelDonut({ routes, t, onSelect, extra, expanded, onToggleExpanded }) 
 						]),
 						h(
 							"span",
-							{ key: "v", className: "dshTup_modelMeta" },
-							formatInt(tokens) + " " + t("unit.tokens") + " · " + t("efficiency.cacheReadShort", { rate: formatShare(efficiency.cacheReadRate) }),
+							{ key: "v", className: "dshTup_modelMeta", title: formatInt(tokens) + " " + t("unit.tokens") },
+							formatCompact(tokens) + " " + t("unit.tokens") + " · " + t("efficiency.cacheReadShort", { rate: formatShare(efficiency.cacheReadRate) }),
 						),
 					]),
 					bar(share, routeColor(id)),
@@ -612,7 +612,7 @@ function ModelDonut({ routes, t, onSelect, extra, expanded, onToggleExpanded }) 
 									h("span", { key: "dot", className: "dshTup_dot", style: { background: OTHER_COLOR } }),
 									h("span", { key: "n", className: "dshTup_modelText" }, t("models.other")),
 								]),
-								h("span", { key: "v", className: "dshTup_modelMeta" }, formatInt(hiddenTokens) + " " + t("unit.tokens")),
+								h("span", { key: "v", className: "dshTup_modelMeta", title: formatInt(hiddenTokens) + " " + t("unit.tokens") }, formatCompact(hiddenTokens) + " " + t("unit.tokens")),
 							]),
 							bar(hiddenShare, OTHER_COLOR),
 							h("span", { key: "p", className: "dshTup_modelShare" }, formatShare(hiddenShare)),

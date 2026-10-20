@@ -197,11 +197,18 @@ function displayOf(row, t, usageOverride) {
 	const efficiency = usage === undefined ? undefined : efficiencyOf(usage);
 	const directory = leafName(row.cwd);
 	const record = {
-		total: total === undefined ? t("never") : formatInt(total),
-		input: usage === undefined ? t("never") : formatInt(usage.uncachedInputTokens),
-		cacheRead: usage === undefined ? t("never") : formatInt(usage.cacheReadTokens),
-		cacheWrite: usage === undefined ? t("never") : formatInt(usage.cacheWriteTokens),
-		output: usage === undefined ? t("never") : formatInt(usage.outputTokens),
+		// The cell reads compact units; its title keeps the exact count so a reader
+		// can still recover the figure the table sorts by.
+		total: total === undefined ? t("never") : formatCompact(total),
+		totalExact: total === undefined ? undefined : formatInt(total) + " " + t("unit.tokens"),
+		input: usage === undefined ? t("never") : formatCompact(usage.uncachedInputTokens),
+		inputExact: usage === undefined ? undefined : formatInt(usage.uncachedInputTokens) + " " + t("unit.tokens"),
+		cacheRead: usage === undefined ? t("never") : formatCompact(usage.cacheReadTokens),
+		cacheReadExact: usage === undefined ? undefined : formatInt(usage.cacheReadTokens) + " " + t("unit.tokens"),
+		cacheWrite: usage === undefined ? t("never") : formatCompact(usage.cacheWriteTokens),
+		cacheWriteExact: usage === undefined ? undefined : formatInt(usage.cacheWriteTokens) + " " + t("unit.tokens"),
+		output: usage === undefined ? t("never") : formatCompact(usage.outputTokens),
+		outputExact: usage === undefined ? undefined : formatInt(usage.outputTokens) + " " + t("unit.tokens"),
 		cacheReadRate: efficiency === undefined ? t("never") : formatShare(efficiency.cacheReadRate),
 		directory,
 		turns: row.stats === undefined ? undefined : t("col.turns") + " " + formatInt(row.stats.turns),

@@ -669,14 +669,28 @@ const seedBlock = (id) => {
  */
 const archivedIds = []
 const registeredLocales = {}
+/** Active locale reported by the stub seat; the compact notation follows it. */
+let localeActive = 'zh'
+let localeRevision = 0
+const localeListeners = new Set()
+/** Switch the stub locale and notify the panel like the shell's locale seat. */
+function switchLocale(next) {
+  localeActive = next
+  localeRevision += 1
+  for (const notify of [...localeListeners]) notify()
+}
 const ctx = {
   effect: (fn) => fn(),
   locale: {
+    getLocale: () => ({ active: localeActive, locales: [], revision: localeRevision }),
     register: (namespace, dictionaries) => {
       registeredLocales[namespace] = dictionaries
       return () => undefined
     },
-    subscribe: () => () => undefined,
+    subscribe: (notify) => {
+      localeListeners.add(notify)
+      return () => localeListeners.delete(notify)
+    },
     bind: () => (key) => key,
   },
   slots: {
@@ -884,8 +898,8 @@ const overview = text()
 check(rootNode().props['data-view'] === 'overview', 'the panel opens on the overview')
 check(rootNode().props['data-animate'] === 'true', 'the panel enables motion on the root')
 check(overview.includes('kpi.total') && overview.includes('kpi.peak') && overview.includes('kpi.current'), 'the KPI strip and calendar note render their labels')
-check(overview.includes('287K'), 'the cumulative KPI reads the lifetime total on range=all (287K)')
-check(overview.includes('273K'), 'the peak reading sits in the calendar note (273K)')
+check(overview.includes('28.7万'), 'the cumulative KPI reads the lifetime total in 万 on range=all (28.7万)')
+check(overview.includes('27.3万'), 'the peak reading sits in the calendar note (27.3万)')
 check(!overview.includes('kpi.compare'), 'range=all does not write a period comparison')
 check(!overview.includes('card.sessionsHint'), 'the overview footer does not count sessions')
 // The longest-chat KPI was removed at the user's request, so the assertion that
@@ -970,7 +984,7 @@ console.log('# render gate')
   listStore.push(snapshotOf({ ...baseById }, changed, 'ready'))
   await settle()
   check(renders <= before + 2, 'one real usage change costs at most two re-renders (' + (renders - before) + ')')
-  check(text().includes('288K') || text().includes('288,700'), 'the changed total reaches the KPI strip')
+  check(text().includes('28.8万'), 'the changed total reaches the KPI strip')
   listStore.push(snapshotOf(baseById, baseProjections, 'ready'))
   await settle()
 }
@@ -1030,8 +1044,8 @@ console.log('# sessions view')
 await showSessions()
 check(rootNode().props['data-view'] === 'sessions', 'the view control switches to the table')
 const baseline = text()
-check(baseline.includes('286,700'), 'the headline total sums every session (286,700)')
-check(baseline.includes('262,000'), 'the composition legend reports summed cache reads')
+check(baseline.includes('28.7万'), 'the headline total sums every session (28.7万)')
+check(baseline.includes('26.2万'), 'the composition legend reports summed cache reads (26.2万)')
 check(hasClass('dshTup_stats') === 0, 'the sessions summary no longer repeats the four buckets as a second row')
 check(titlesIn().join('|') === 'Refactor the sidebar|Long session', 'root rows render in total-descending order (' + titlesIn().join('|') + ')')
 check(rowsIn().length === 2, 'child sessions stay collapsed by default (' + rowsIn().length + ')')
@@ -1056,7 +1070,7 @@ check(rowsIn().length === 2, 'range=7d keeps sessions with usage in the window (
 check(titlesIn().join('|') === 'Refactor the sidebar|Long session', 'the window drops the session with no day buckets')
 await pickSegment('range.all')
 await pickMenu('filter.more', 'other')
-check(rowsIn().length === 1 && text().includes('13,300'), 'the directory menu narrows to one session')
+check(rowsIn().length === 1 && text().includes('1.33万'), 'the directory menu narrows to one session')
 check(text().includes('directory') && text().includes('other'), 'the active directory is shown as a chip')
 await reset()
 await search('refactor')
@@ -1307,7 +1321,7 @@ if (retry !== undefined) {
   await settle()
   check(refreshCalls.length === 2, 'a rejected read is not retried on its own')
 }
-check(text().includes('286,700'), 'the panel still totals the sessions that did resolve')
+check(text().includes('28.7万'), 'the panel still totals the sessions that did resolve')
 
 console.log('# runtime usage audit')
 {
@@ -1395,15 +1409,15 @@ console.log('# host UTC offset reaches the calendar')
   }
   listStore.push(snapshotOf(baseById, baseProjections, 'ready'))
   await settle()
-  const before = cellDate('273,400')
+  const before = cellDate('27.3万')
   check(typeof before === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(before), 'an activity cell titles itself with an ISO date (' + before + ')')
   listStore.push(snapshotOf(baseById, offsetProjections, 'ready'))
   await settle()
-  const shifted = cellDate('273,400')
+  const shifted = cellDate('27.3万')
   check(typeof shifted === 'string' && daysBetween(shifted, before) === 1, 'a one-day Host offset shifts the rendered date by exactly one day (' + before + ' -> ' + shifted + ')')
   listStore.push(snapshotOf(baseById, baseProjections, 'ready'))
   await settle()
-  check(cellDate('273,400') === before, 'the offset participates in row identity, so restoring it restores the date (' + cellDate('273,400') + ')')
+  check(cellDate('27.3万') === before, 'the offset participates in row identity, so restoring it restores the date (' + cellDate('27.3万') + ')')
   // The day chip must label the selected day in the frame the cell that set it
   // used. The chip lives in the sessions view, where the calendar is not mounted
   // - the exact seam where a dropped offset falls back to 0. On this UTC+8
@@ -1414,7 +1428,7 @@ console.log('# host UTC offset reaches the calendar')
   const shiftedCell = collect(
     tree,
     (node) => node.type === 'rect' && typeof node.props.className === 'string' && node.props.className.includes('dshTup_cell'),
-  ).find((cell) => (cell.children ?? []).some((child) => child.type === 'title' && textOf(child).includes('273,400')))
+  ).find((cell) => (cell.children ?? []).some((child) => child.type === 'title' && textOf(child).includes('27.3万')))
   const shiftedDate = textOf((shiftedCell.children ?? []).find((child) => child.type === 'title')).slice(0, 10)
   shiftedCell.props.onClick()
   await settle()
@@ -1494,7 +1508,7 @@ console.log('# click a day to filter')
   // and trend do; only the table is day-scoped. A KPI reading the day's subtotal
   // beside a year of chart was the same "chart answers itself" contradiction.
   await showOverview()
-  check(text().includes('287K'), 'the overview total keeps ignoring the day filter')
+  check(text().includes('28.7万'), 'the overview total keeps ignoring the day filter')
   await showSessions()
 
   const chip = collect(tree, (node) => node.type === 'button' && textOf(node).includes('filter.day'))[0]
@@ -1728,6 +1742,51 @@ console.log('# one name for the total across both views')
   check(hero !== undefined && String(hero.props.title).includes('286,700'), 'the compact headline exposes the exact figure (286,700)')
 }
 
+console.log('# compact numbers follow the active locale')
+{
+  await reset()
+  await showOverview()
+  check(text().includes('28.7万'), 'the Chinese locale compacts tokens with 万 (28.7万)')
+  check(!text().includes('287K'), 'the Chinese locale does not leak SI units (287K)')
+  // The shell re-renders the slots on a locale change; the stub reproduces that
+  // by notifying the panel and then pushing the same snapshot through the store.
+  switchLocale('en')
+  render()
+  await settle()
+  check(text().includes('287K'), 'the English locale keeps SI units (287K)')
+  check(!text().includes('万'), 'the English locale does not leak 万 units')
+  switchLocale('zh')
+  render()
+  await settle()
+  check(text().includes('28.7万'), 'switching back restores 万 units')
+}
+
+console.log('# compact unit thresholds')
+{
+  const only = (uncached) => ({
+    byId: { 's-h': summaryOf('s-h', 'Huge session') },
+    projections: { 's-h': { values: usageOf(uncached, 0, 0, 0), state: 'ready' } },
+  })
+  const huge = only(550000000)
+  listStore.push(snapshotOf(huge.byId, huge.projections, 'ready'))
+  render()
+  await settle()
+  check(text().includes('5.5亿'), 'amounts of hundreds of millions compact with 亿 (5.5亿)')
+  const rounding = only(99999999)
+  listStore.push(snapshotOf(rounding.byId, rounding.projections, 'ready'))
+  render()
+  await settle()
+  check(text().includes('1亿') && !text().includes('10000万'), 'rounding promotes 万 to the next unit instead of printing 10000万')
+  const small = only(8200)
+  listStore.push(snapshotOf(small.byId, small.projections, 'ready'))
+  render()
+  await settle()
+  check(text().includes('8,200'), 'counts below 万 keep thousands separators (8,200)')
+  listStore.push(snapshotOf(baseById, baseProjections, 'ready'))
+  render()
+  await settle()
+}
+
 console.log('# the stylesheet carries no dead band and no duplicate type step')
 {
   check(!/\.dshTup_route[A-Za-z]*[{,: ]/.test(css) && !css.includes('.dshTup_routes'), 'no style survives for the removed per-model band')
@@ -1953,9 +2012,9 @@ console.log('# session tree')
   check(treeToggle('s-1') !== undefined && treeToggle('s-1').props['aria-expanded'] === false, 'the parent row offers a collapsed disclosure')
   check(treeToggle('s-2') === undefined, 'a session with no matched children has no disclosure')
   const parentBefore = rowsIn().find((row) => row.props['data-row'] === 's-1')
-  check(parentBefore !== undefined && textOf(parentBefore).includes('273,400'), 'the parent cell shows its own total')
+  check(parentBefore !== undefined && textOf(parentBefore).includes('27.3万'), 'the parent cell shows its own total')
   check(parentBefore !== undefined && textOf(parentBefore).includes('tree.family') && textOf(parentBefore).includes('tree.children'), 'the parent also names the family total and child count')
-  check(text().includes('286,700'), 'the summary still sums each session once before expand')
+  check(text().includes('28.7万'), 'the summary still sums each session once before expand')
   check(parentBefore !== undefined && parentBefore.props['aria-level'] === 1, 'root rows announce themselves as level 1')
 
   opened.length = 0
@@ -1966,9 +2025,9 @@ console.log('# session tree')
   const child = rowsIn().find((row) => row.props['data-row'] === 's-3')
   check(child !== undefined && child.props['aria-level'] === 2, 'the child row announces itself as level 2')
   check(child !== undefined && textOf(child).includes('badge.subagent'), 'the nested child keeps the subagent badge')
-  check(text().includes('286,700'), 'expanding does not change the summary total')
+  check(text().includes('28.7万'), 'expanding does not change the summary total')
   const parentAfter = rowsIn().find((row) => row.props['data-row'] === 's-1')
-  check(parentAfter !== undefined && textOf(parentAfter).includes('273,400'), 'the parent cell still shows its own total after expand')
+  check(parentAfter !== undefined && textOf(parentAfter).includes('27.3万'), 'the parent cell still shows its own total after expand')
 
   parentAfter.props.onClick()
   check(opened.join(',') === 's-1', 'clicking the parent row still opens it')
@@ -2005,9 +2064,9 @@ console.log('# session tree')
   listStore.push(snapshotOf(extraById, extraProjections, 'ready'))
   await settle()
   const familyParent = rowsIn().find((row) => row.props['data-row'] === 's-1')
-  check(text().includes('286,850'), 'a billed child is counted once in the summary (286,850)')
-  check(familyParent !== undefined && textOf(familyParent).includes('273,400'), 'the parent cell is still the independent total')
-  check(familyParent !== undefined && textOf(familyParent).includes('273,550'), 'the family total is own plus matched descendants')
+  check(text().includes('28.7万'), 'a billed child is counted once in the summary (28.7万)')
+  check(familyParent !== undefined && textOf(familyParent).includes('27.3万'), 'the parent cell is still the independent total')
+  check(familyParent !== undefined && textOf(familyParent).includes('27.4万'), 'the family total is own plus matched descendants')
 
   const weirdById = {
     ...baseById,
